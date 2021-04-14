@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+    <form action="/dashboard/search_book" method="post">
+        <label for="category">Select a category to search</label>
+            <select name="category">
+                <option value="isbn">ISBN</option>
+                <option value="title">Title</option>
+                <option value="author">Author</option>
+                <option value="year_of_pub">Year of Publication</option>
+            </select>
+        <input name="ans" type="text">
+        <button type="submit">Search</button>
+    </form>
+<%- include('partials/footer') %>
