@@ -7,3 +7,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
+
+app.listen(process.env.PORT || port,function(){
+    console.log("Server running at port "+port);
+})
