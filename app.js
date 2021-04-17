@@ -13,7 +13,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "Prasheel@4",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -112,7 +112,7 @@ app.post("/login",function(req,res){
         }
         else{
             passport.authenticate("local")(req,res,function(){
-                console.log(req.user.username);
+                console.log(req.user.id);
                 res.redirect("/dashboard/search_book");
             })
         }
@@ -123,10 +123,10 @@ app.post("/login",function(req,res){
 
 app.get("/dashboard",function(req,res){
     if(req.isAuthenticated()){
+        console.log(req.user.id);
         res.render("user_dashboard");
     }
     else{
-        console.log(req.user.id);
         res.redirect("/login")
     }
 })
@@ -138,7 +138,7 @@ app.get("/dashboard/search_book",function(req,res){
     else{
         res.redirect("/login")
     }
-    
+    console.log(req.user);
 })
 
 app.post("/dashboard/search_book",function(req,res){
