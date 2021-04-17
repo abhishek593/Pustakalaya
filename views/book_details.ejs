@@ -1,6 +1,36 @@
 <%- include('partials/header') %>
-<h1><%= title %></h1>
-<h2><%= yearOfPub %></h2>
-<h4><%= shelfNo %></h4>
-<h4><%= current_status %></h4>
+<h1><%= details[0].title %></h1>
+<h2><%= details[0].author %></h2>
+<h2><%= details[0].year_of_pub %></h2>
+<h4><%= details[0].shelf_id %></h4>
+<h4><%= details[0].current_status %></h4>
+<table border="1px">
+    <thead>
+        <th>Copy Number</th>
+        <th>Availability</th>
+    </thead>
+    <tbody>
+        
+            <% copies.forEach(function(copy){    %>
+            <tr>
+                <td><%= copy.copy_number %></td>
+                <% if(copy.status===1){  %>
+                <td>Availiable</td>
+                <% }else{   %>
+                <td>Unavailiable</td>
+                <% }  %>
+            </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
+<form action="/hold_request" method="post">
+    <% if(hold){  %>
+        <button id="Hold">Hold</button>
+    <%  }else{  %>
+        <button id="Hold" disabled="true">Hold</button>
+    <%  }  %>
+</form>
+
 <%- include('partials/footer') %>

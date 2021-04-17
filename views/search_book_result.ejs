@@ -8,9 +8,9 @@
         <th>Status</th>
     </thead>
     <tbody>
-        <tr>
+        
             <% results.forEach(function(result){    %>
-                
+            <tr>
                 <td>
                     <a href="/book_details/<%= result.ISBN %>"><%= result.ISBN %></a>
                 </td>
@@ -18,8 +18,8 @@
                 <td><%= result.year_of_pub %></td>
                 <td><%= result.shelf_id %></td>
                 <td><%= result.current_status %></td>
+            </tr>
             <% })   %>
-        </tr>
         
     </tbody>
     

@@ -14,7 +14,7 @@ var con= mysql.createConnection({
     port: 3306,
     user: "root",
     password: "",
-    database: "librarymanagement"
+    database: "pustakalaya"
 })
 con.connect(function(err) {
     if(err){
@@ -44,7 +44,8 @@ mongoose.set('useCreateIndex', true);
 
 const userSchema= new mongoose.Schema({
     email: String,
-    password: String
+    password: String,
+    id: String
 });
 
 
@@ -61,19 +62,34 @@ app.get("/login",function(req,res){
     res.render("login");
 })
 
+let count=1;
+
 app.get("/register",function(req,res){
     res.render("register");
 })
 
 app.post("/register",function(req,res){
-    console.log(req.body.username, req.body.password)
-    User.register({username: req.body.username},req.body.password,function(err,user){
+    console.log(req.body.username, req.body.password,req.body)
+    let role=req.body.role;
+    let l=role[0]+count;
+    console.log(l);
+    count+=1;
+    User.register({username: req.body.username,id: l},req.body.password,function(err,user){
         if(err){
             console.log(err);
             res.redirect("/register");
         }
         else{
             passport.authenticate("local")(req,res,function(){
+                console.log(user.id);
+                con.connect(function(err) {
+                    var sql = 'Insert into users value("'+user.id+'")';
+                    console.log(sql);
+                    con.query(sql ,function (err, result) {
+                      if (err) throw err;
+                      console.log(result);
+                    })
+                })
                 res.redirect("/dashboard/search_book");
             });
         }
@@ -96,6 +112,7 @@ app.post("/login",function(req,res){
         }
         else{
             passport.authenticate("local")(req,res,function(){
+                console.log(req.user.username);
                 res.redirect("/dashboard/search_book");
             })
         }
@@ -109,6 +126,7 @@ app.get("/dashboard",function(req,res){
         res.render("user_dashboard");
     }
     else{
+        console.log(req.user.id);
         res.redirect("/login")
     }
 })
@@ -148,27 +166,30 @@ app.post("/dashboard/search_book",function(req,res){
 app.get("/book_details/:isbn",function(req,res){
     if(req.isAuthenticated()){
         let isbn=req.params.isbn;
-        let title;
-        let yearOfPub;
-        let shelfNo;
-        let current_status;
+        let values;
         con.connect(function(err) {
             var sql = 'Select * from books_collection where ISBN='+isbn;
             console.log(sql);
             con.query(sql ,function (err, result) {
             if (err) throw err;
-            console.log(result);
-            console.log(result[0].ISBN);
-            title=result[0].title;
-            yearOfPub=result[0].year_of_pub;
-            shelfNo=result[0].shelf_id;
-            current_status=result[0].current_status;
+            // console.log(result);
+            // console.log(result[0].ISBN);
+            values=result;
             })
-            sql = 'Select count(copy_number) from all_books where ISBN='+isbn;
+            sql = 'Select * from all_books where ISBN='+isbn;
+            console.log(sql);
             con.query(sql ,function (err, result) {
                 if (err) throw err;
-                console.log(result);
-                res.render("book_details",{title: title,yearOfPub: yearOfPub,shelfNo: shelfNo,current_status: current_status});
+                // console.log(result);
+                let hold=1;
+                result.forEach(function(copy){
+                    // console.log(copy.copy_number);
+                    if(copy.status===1){
+                        hold=0;
+                    }
+                })
+                // console.log(hold)
+                res.render("book_details",{details: values,copies: result,hold: hold});
             })
         })
     }
@@ -176,6 +197,10 @@ app.get("/book_details/:isbn",function(req,res){
         res.redirect("/login")
     }
     
+})
+
+app.post("/hold_request",function(req,res){
+
 })
 
 app.listen(process.env.PORT || port,function(){
