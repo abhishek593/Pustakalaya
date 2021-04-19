@@ -1,6 +1,6 @@
 <%- include('partials/header') %>
 <h1><%= details[0].title %></h1>
-<h2><%= details[0].author %></h2>
+<h2><%= details[0].ISBN %></h2>
 <h2><%= details[0].year_of_pub %></h2>
 <h4><%= details[0].shelf_id %></h4>
 <h4><%= details[0].current_status %></h4>
@@ -25,12 +25,17 @@
     </tbody>
     
 </table>
-<form action="/hold_request" method="post">
+<form action="/hold_request/<%= details[0].ISBN %>" method="post">
     <% if(hold){  %>
-        <button id="Hold">Hold</button>
+        <button type="submit" id="Hold">Hold</button>
     <%  }else{  %>
-        <button id="Hold" disabled="true">Hold</button>
+        <button type="submit" role="button" id="Hold" disabled>Hold</button>
     <%  }  %>
+</form>
+<form action="/issue/<%= details[0].ISBN %>" method="post">
+    <% if(issue){  %>
+        <button type="submit" id="Issue">issue</button>
+    <%  } %>
 </form>
 
 <%- include('partials/footer') %>
