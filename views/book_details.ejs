@@ -1,10 +1,11 @@
 <%- include('partials/header') %>
 <h1><%= details[0].title %></h1>
 <h2><%= details[0].ISBN %></h2>
+<h2><%- details[0].author %></h2>
 <h2><%= details[0].year_of_pub %></h2>
 <h4><%= details[0].shelf_id %></h4>
 <h4><%= details[0].current_status %></h4>
-<table border="1px">
+<table >
     <thead>
         <th>Copy Number</th>
         <th>Availability</th>
@@ -14,7 +15,7 @@
             <% copies.forEach(function(copy){    %>
             <tr>
                 <td><%= copy.copy_number %></td>
-                <% if(copy.status===1){  %>
+                <% if(copy.current_status===1){  %>
                 <td>Availiable</td>
                 <% }else{   %>
                 <td>Unavailiable</td>
@@ -38,4 +39,12 @@
     <%  } %>
 </form>
 
+<form action="/book_shelf/<%= details[0].ISBN %>" method="post">
+    <% if(book_shelf){  %>
+        <button type="submit" id="Issue">Add to Book Shelf</button>
+    <%  }else{ %>
+        <h4>Book Exists in Book_shelf</h4>
+    <% } %> 
+</form>
+for
 <%- include('partials/footer') %>

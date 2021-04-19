@@ -3,6 +3,7 @@
     <thead>
         <th>ISBN</th>
         <th>Title</th>
+        <th>Author</th>
         <th>Year of Publication</th>
         <th>Shelf No.</th>
         <th>Status</th>
@@ -15,6 +16,7 @@
                     <a href="/book_details/<%= result.ISBN %>"><%= result.ISBN %></a>
                 </td>
                 <td><%= result.title %></td>
+                <td><%- result.author %></td>
                 <td><%= result.year_of_pub %></td>
                 <td><%= result.shelf_id %></td>
                 <td><%= result.current_status %></td>
