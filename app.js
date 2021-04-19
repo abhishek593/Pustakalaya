@@ -13,7 +13,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "5930",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -42,16 +42,16 @@ const cquery = async (sql,req,res)=>{
     })
 }
 
-function getSQLResult(sql) {
-    let value = "";
-    con.promise(sql)
-        .then((result) => {
-             result;
-        }).catch((err) => {
-            console.log(err);
-    })
-    return value;
-}
+// function getSQLResult(sql) {
+//     let value = "";
+//     con.promise(sql)
+//         .then((result) => {
+//              result;
+//         }).catch((err) => {
+//             console.log(err);
+//     })
+//     return value;
+// }
 ///////////////////////////////////////////////////////////////////////////////
 
 const mongoose= require("mongoose");
@@ -99,36 +99,18 @@ app.get("/register",function(req,res){
     }
 })
 
-let count = 0;
-
-app.post("/register",function(req,res){
-
-    con.connect(function (err) {
-        con.query("SELECT * FROM users", function (err, result) {
-            count += result.length;
-            // console.log(result);
-            // console.log("res length = " + result.length);
-        });
-        // console.log(count);
-    })
-
-    count += 1;
-    console.log("count = " + count);
+app.post("/register",async function(req,res){
+    let sql = `SELECT * FROM users`;
+    let result = await cquery(sql, req, res);
+    let count = 1;
+    if (result.length > 0) count += result.length;
     let role = req.body.role;
     let l = role[0] + count;
-    console.log("l = " + l);
-
-    console.log(req.body.username, req.body.password,req.body)
-    // console.log(l);
     User.register({username: req.body.username,id: l},req.body.password,function(err,user){
         if(err){
-            // console.log(err);
             res.redirect("/register");
-        }
-        else{
+        }else{
             passport.authenticate("local")(req,res,function(){
-
-                console.log(user.id);
                 con.connect(function(err) {
                     let sql = 'Insert into users value("'+user.id+'")', sql2;
                     if (role === "faculty") {
@@ -140,11 +122,9 @@ app.post("/register",function(req,res){
                     }
                     con.query(sql ,function (err, result) {
                       if (err) throw err;
-                      console.log(result);
                     })
                     con.query(sql2 ,function (err, result) {
                         if (err) throw err;
-                        console.log(result);
                     })
                 })
                 res.redirect("/dashboard/search_book");
@@ -294,12 +274,6 @@ app.get("/book_details/:isbn",async function(req,res){
     }
     
 })
-// con.promise(sql)
-// .then((result) => {
-//     })
-// .catch((err) => {
-//     console.log(err);
-// })
 
 function overdue(){
     var future = new Date();
@@ -461,8 +435,6 @@ app.get("/dashboard/holds_placed",function(req,res){
 })
 
 
-
-
 /*
 Librarian stuff starts
 In all these cases we want to add a check if id starts from l or not
@@ -481,36 +453,133 @@ app.get("/addBook", function (req, res) {
     return res.render("add_book");
 })
 
-app.post("/addBook", function (req, res) {
+app.post("/addBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
-    let sql =  `INSERT INTO books_collection (ISBN, title, author, year_of_pub, shelf_id, current_status, present_status) VALUES
-            ("${req.body['ISBN']}", "${req.body['title']}", "${req.body['author']}", "${req.body['year_of_pub']}", "${req.body['shelf_id']}",
-            "${ON_SHELF}", "${1}")`;
-    getSQLResult(sql);
-    let result = getSQLResult(`SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}"`);
+    let sql = `SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}" AND present_status = 1`;
+    let result = await cquery(sql, req, res);
     let x = 0;
     if (result.length > 0) x = result.length;
+    else{
+        sql = `SELECT * FROM books_collection WHERE ISBN = "${req.body['ISBN']}"`;
+        result = await cquery(sql, req, res);
+        if (result.length === 0) {
+            sql =  `INSERT INTO books_collection (ISBN, title, author, year_of_pub, shelf_id, current_status, present_status) VALUES
+            ("${req.body['ISBN']}", "${req.body['title']}", "${req.body['author']}", "${req.body['year_of_pub']}", "${req.body['shelf_id']}",
+            "${ON_SHELF}", "${1}")`;
+            await cquery(sql, req, res);
+        }else{
+            sql = `UPDATE books_collection SET present_status = 1 WHERE ISBN = "${req.body['ISBN']}"`;
+            await cquery(sql, req, res);
+        }
+    }
     x += 1;
-    console.log("x = " + x);
-    sql = `INSERT INTO all_books (ISBN, copy_number, status) VALUES ("${req.body['ISBN']}", "${x}", "${1}")`;
-    console.log(getSQLResult(sql));
+    sql = `SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}"`;
+    let result2 = await cquery(sql, req, res);
+    if (result2.length > result.length) {
+        sql = `UPDATE all_books SET present_status = 1 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = ${x}`;
+        await cquery(sql, req, res)
+    }else{
+        sql = `INSERT INTO all_books (ISBN, copy_number, present_status, current_status) VALUES ("${req.body['ISBN']}", "${x}", "${1}", "${1}")`;
+        await cquery(sql, req, res);
+    }
     return res.render("librarian_special_dashboard");
 })
 
 app.get("/deleteBook", function (req, res) {
-    return res.render("add_book");
+    return res.render("delete_book");
 })
 
-app.post("/deleteBook", function (req, res) {
+app.post("/deleteBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
+    let sql = `SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}" AND present_status = 1`;
+    let result = await cquery(sql, req, res);
+    let errors = "";
+    if (result.length === 0) {
+        errors = "The book with that ISBN does not exist in the library.";
+    }else{
+        sql = `UPDATE all_books SET present_status = 0 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = ${result.length}`;
+        await cquery(sql, req, res);
+        if (result.length === 1) {
+            sql = `UPDATE books_collection SET present_status = 0 WHERE ISBN = "${req.body['ISBN']}"`;
+            await cquery(sql, req, res);
+        }
+    }
+    return res.render("delete_book", {
+        'errors': errors
+    });
 })
+
+app.get("/addShelf", function (req, res) {
+    return res.render("add_shelf");
+})
+
+app.post("/addShelf", async function (req, res) {
+    if (!req.isAuthenticated()) res.redirect("/login");
+    let sql = `SELECT * FROM shelf WHERE shelf_id = "${req.body['shelf_id']}"`;
+    let result = await cquery(sql, req, res);
+    let messages = "";
+    if (result.length > 0) {
+        messages = "The shelf with same ID already exists.";
+    }else{
+        sql = `INSERT INTO shelf VALUES("${req.body['shelf_id']}", ${req.body['capacity']})`;
+        result = await cquery(sql, req, res);
+    }
+    return res.render("add_shelf", {
+        'messages': messages
+    })
+})
+
+
+app.get("/returnBook", function (req, res) {
+    return res.render("return_book");
+})
+
+app.post("/returnBook", async function (req, res) {
+    if (!req.isAuthenticated()) res.redirect("/login");
+    let sql = `UPDATE booksissued SET return_status = 1 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = ${req.body['copy_number']}`;
+    await cquery(sql, req, res);
+    sql = `UPDATE books_collection SET current_status = "${ON_SHELF}" WHERE ISBN = "${req.body['ISBN']}"`;
+    await cquery(sql, req, res);
+    sql = `UPDATE all_books SET current_status = 1 WHERE ISBN = "${req.body['ISBN']}"`;
+    await cquery(sql, req, res);
+    //check if someone needs this book
+    sql = `SELECT ID FROM hold_request WHERE ISBN = "${req.body['ISBN']}" ORDER BY date_of_hold, time_of_hold LIMIT 1`;
+    let result = await cquery(sql, req, res);
+    sql = `UPDATE student SET Number_of_issued_books = Number_of_issued_books - 1 WHERE ID = "${result[0]['ID']}"`;
+    //prasheel add the issue function here
+    return res.render("librarian_special_dashboard");
+})
+
 
 app.get("/updateBook", function (req, res) {
-    return res.render("add_book");
+    return res.render("update_book");
 })
 
-app.post("/updateBook", function (req, res) {
+app.post("/updateBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
+    let sql = `SELECT * FROM shelf WHERE shelf_id = "${req.body['shelf_id']}"`;
+    let result = await cquery(sql, req, res);
+    let messages = "";
+    if (result.length === 0) {
+        messages = "No shelf with that shelf_id exists.";
+        return res.render("update_book", {
+            'messages': messages
+        });
+    }
+    sql = `SELECT shelf_id FROM books_collection WHERE ISBN = "${req.body['ISBN']}"`;
+    result = await cquery(sql, req, res);
+    if (result.length === 0) {
+        messages = "No book with such ISBN exists.";
+        return res.render("update_book", {
+            'messages': messages
+        });
+    }
+    sql = `UPDATE books_collection SET shelf_id = "${req.body['shelf_id']}" WHERE ISBN = "${req.body['ISBN']}"`;
+    await cquery(sql, req, res)
+
+    return res.render("update_book", {
+        'messages': messages
+    });
 })
 /*
 Librarian stuff ends
@@ -518,5 +587,4 @@ Librarian stuff ends
 
 app.listen(process.env.PORT || port,function(){
     console.log("Server running at port "+port);
-
 })

@@ -7,16 +7,16 @@
             <div class="card">
                 <div class="card-body">
 
-                    <form action="/updateBook" method="POST">
+                    <form action="/addShelf" method="POST">
                         <div class="form-group">
-                            <label for="ISBN">ISBN</label>
-                            <input type="text" class="form-control" name="ISBN">
-                        </div>
-                        <div class="form-group">
-                            <label for="shelf_id">New Shelf ID</label>
+                            <label for="shelf_id">Shelf ID</label>
                             <input type="text" class="form-control" name="shelf_id">
                         </div>
-                        <button type="submit" class="btn btn-dark">Update Book</button>
+                        <div class="form-group">
+                            <label for="capacity">Capacity</label>
+                            <input type="number" class="form-control" name="capacity">
+                        </div>
+                        <button type="submit" class="btn btn-dark">Add Shelf</button>
                     </form>
 
                 </div>
