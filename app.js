@@ -2,11 +2,21 @@ let express = require('express');
 let app = express();
 let port = 3000;
 let bodyParser = require('body-parser');
+let session = require('express-session');
+let cookieParser = require('cookie-parser');
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
+app.use(cookieParser('secret'))
+app.use(session({cookie: {maxAge: 60000}}))
+
+app.use((req, res, next)=>{
+    res.locals.message = req.session.message
+    delete req.session.message
+    next()
+})
 
 const mysql=require('mysql');
 var con= mysql.createConnection({
@@ -42,20 +52,27 @@ const cquery = async (sql,req,res)=>{
     })
 }
 
-// function getSQLResult(sql) {
-//     let value = "";
-//     con.promise(sql)
-//         .then((result) => {
-//              result;
-//         }).catch((err) => {
-//             console.log(err);
-//     })
-//     return value;
-// }
+/*
+FLASH MESSAGE EXAMPLE IN EJS file
+
+<%if (message) {%>
+<div style="text-align: center" class="alert alert-{{message.type}}">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong><%=message['intro']%></strong> <p><%=message['message']%></p>
+</div>
+<%}%>
+
+    Add messages like this in app.js
+    req.session.message = {
+      type: 'danger',
+      intro: 'Empty fields! ',
+      message: 'Please insert the requested information.'
+    }
+ */
 ///////////////////////////////////////////////////////////////////////////////
 
 const mongoose= require("mongoose");
-const session= require("express-session");
+// const session= require("express-session");
 const passport= require("passport");
 const passportlocalmongoose= require("passport-local-mongoose");
 app.use(session({
@@ -493,9 +510,13 @@ app.post("/deleteBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
     let sql = `SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}" AND present_status = 1`;
     let result = await cquery(sql, req, res);
-    let errors = "";
     if (result.length === 0) {
-        errors = "The book with that ISBN does not exist in the library.";
+        req.session.message = {
+            type: 'danger',
+            intro: 'Incorrect Data',
+            message: "The book with that ISBN does not exist in the library."
+        }
+        res.redirect('/deleteBook');
     }else{
         sql = `UPDATE all_books SET present_status = 0 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = ${result.length}`;
         await cquery(sql, req, res);
@@ -504,9 +525,7 @@ app.post("/deleteBook", async function (req, res) {
             await cquery(sql, req, res);
         }
     }
-    return res.render("delete_book", {
-        'errors': errors
-    });
+    res.redirect('/deleteBook');
 })
 
 app.get("/addShelf", function (req, res) {
@@ -517,18 +536,19 @@ app.post("/addShelf", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
     let sql = `SELECT * FROM shelf WHERE shelf_id = "${req.body['shelf_id']}"`;
     let result = await cquery(sql, req, res);
-    let messages = "";
+
     if (result.length > 0) {
-        messages = "The shelf with same ID already exists.";
+        req.session.message = {
+            type: 'danger',
+            intro: 'Incorrect Data',
+            message: "The shelf with same ID already exists."
+        }
     }else{
         sql = `INSERT INTO shelf VALUES("${req.body['shelf_id']}", ${req.body['capacity']})`;
-        result = await cquery(sql, req, res);
+        await cquery(sql, req, res);
     }
-    return res.render("add_shelf", {
-        'messages': messages
-    })
+    res.redirect('/addShelf');
 })
-
 
 app.get("/returnBook", function (req, res) {
     return res.render("return_book");
@@ -559,27 +579,28 @@ app.post("/updateBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
     let sql = `SELECT * FROM shelf WHERE shelf_id = "${req.body['shelf_id']}"`;
     let result = await cquery(sql, req, res);
-    let messages = "";
     if (result.length === 0) {
-        messages = "No shelf with that shelf_id exists.";
-        return res.render("update_book", {
-            'messages': messages
-        });
+        req.session.message = {
+            type: 'danger',
+            intro: 'Incorrect Data',
+            message: "No shelf with that shelf_id exists."
+        }
+        res.redirect('/updateBook');
     }
     sql = `SELECT shelf_id FROM books_collection WHERE ISBN = "${req.body['ISBN']}"`;
     result = await cquery(sql, req, res);
     if (result.length === 0) {
-        messages = "No book with such ISBN exists.";
-        return res.render("update_book", {
-            'messages': messages
-        });
+        req.session.message = {
+            type: 'danger',
+            intro: 'Incorrect Data',
+            message: "No book with such ISBN exists."
+        }
+        res.redirect('/updateBook');
     }
     sql = `UPDATE books_collection SET shelf_id = "${req.body['shelf_id']}" WHERE ISBN = "${req.body['ISBN']}"`;
     await cquery(sql, req, res)
 
-    return res.render("update_book", {
-        'messages': messages
-    });
+    res.redirect('/updateBook');
 })
 /*
 Librarian stuff ends

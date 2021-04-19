@@ -2,6 +2,10 @@
 <div class="container mt-5">
     <h1>Register</h1>
 
+    <%if (message) {%>
+        <strong><%=message['intro']%></strong> <p><%=message['message']%></p>
+    <%}%>
+
     <div class="row">
         <div class="col-sm-8">
             <div class="card">
