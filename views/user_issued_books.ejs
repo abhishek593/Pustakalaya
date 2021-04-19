@@ -1,0 +1,24 @@
+<%- include('partials/header') %>
+
+<table border="1px">
+    <thead>
+        <tr>
+            <td>S.No</td>
+            <td>ISBN</td>
+            <td>Copy Number</td>
+            <td>Issue Date</td>
+            <td>Overdue Date</td>
+        </tr>
+        <% for(var i=1;i<=results.length;i++){   %>
+            <tr>
+                <td><%= i %></td>
+                <td><%= results[i-1].ISBN %></td>
+                <td><%= results[i-1].copy_number %></td>
+                <td><%= (results[i-1].Date_of_Issue).toISOString().substring(0,10) %></td>
+                <td><%= (results[i-1].Overdue_date).toISOString().substring(0,10) %></td>
+            </tr>
+        <% }    %>
+    </thead>
+</table>
+
+<%- include('partials/footer') %>

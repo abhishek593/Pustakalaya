@@ -13,7 +13,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "5930",
+    password: "Prasheel@4",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -86,8 +86,23 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+app.get("/",function(req,res){
+    if(req.isAuthenticated()){
+        res.redirect("/dashboard");
+    }
+    else{
+        res.render("home");
+    }
+    
+})
+
 app.get("/login",function(req,res){
-    res.render("login");
+    if(req.isAuthenticated()){
+        res.redirect("/dashboard");
+    }
+    else{
+        res.render("login");
+    }
 })
 
 app.get("/register",function(req,res){
@@ -179,7 +194,7 @@ app.get("/dashboard/search_book",function(req,res){
     }
     console.log(req.user);
 })
-//gets the details of books to search for*
+//gets the details of books to search for
 app.post("/dashboard/search_book",async function(req,res){
     console.log(req.body);
     let category=req.body.category;
@@ -194,19 +209,6 @@ app.post("/dashboard/search_book",async function(req,res){
     else{
         res.send("No such book available");
     }
-    // con.promise(sql)
-    // .then((result) => {
-    //     if(result.length>0){
-    //         console.log(result);
-    //         res.render("search_book_result",{results:result});
-    //     }
-    //     else{
-    //         res.send("No such book available");
-    //     }
-    //     })
-    // .catch((err) => {
-    //     console.log(err);
-    // })
 })
 //display the details of particular book*
 app.get("/book_details/:isbn",async function(req,res){
@@ -222,52 +224,27 @@ app.get("/book_details/:isbn",async function(req,res){
         sql = 'Select * from all_books where ISBN='+isbn;
         let result2=await cquery(sql);
         result2.forEach(function(copy){
-            if(copy.status===1){
+            if(copy.current_status===1){
                 hold=0;
             }
         })
         copies=result2;
-        sql=`select id from booksissued where ISBN="${isbn}" `;
-        let result3=await cquery(sql);
-        if(result3.length===0){
-            issue=1;
+        if(hold===0){
+            sql=`select id from booksissued where ISBN="${isbn}" `;
+            let result3=await cquery(sql);
+            if(result3.length===0){
+                issue=1;
+            }
         }
-        res.render("book_details",{details: values,copies: copies,hold: hold,issue: issue});
-        // con.connect(function(err) {
-        //     var sql = 'Select * from books_collection where ISBN='+isbn;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //     if (err) throw err;
-        //     values=result;
-        //     })
-        //     sql = 'Select * from all_books where ISBN='+isbn;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //         if (err) throw err;
-        //         result.forEach(function(copy){
-        //             if(copy.status===1){
-        //                 hold=0;
-        //             }
-        //         })
-        //         copies=result;
-        //         if(hold===1){
-        //             res.render("book_detail",{details: values,copies: copies,hold: hold,issue: issue});
-        //         }
-        //     })
-        //     sql=`select id from booksissued where ISBN="${isbn}" `;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //         if (err) throw err;
-        //         console.log(result);
-        //         if(result.length===0){
-        //             issue=1;
-        //         }
-        //         if(hold===0){
-        //             res.render("book_details",{details: values,copies: copies,hold: hold,issue: issue});
-        //         }
-        //     })
-        // })
-        
+        sql=`select isbn from user_book_shelf where ID="${req.user.id}"`;
+        let result=await cquery(sql);
+        let book_shelf=1;
+        result.forEach(function(val){
+            if(val.isbn===isbn){
+                book_shelf=0;
+            }
+        })
+        res.render("book_details",{details: values,copies: copies,hold: hold,issue: issue,book_shelf: book_shelf});
     }
     else{
         res.redirect("/login")
@@ -275,9 +252,16 @@ app.get("/book_details/:isbn",async function(req,res){
     
 })
 
-function overdue(){
+function overdue(c){
+    let days;
+    if(c=='s'){
+        days=30;
+    }
+    else{
+        days=60;
+    }
     var future = new Date();
-    future.setDate(future.getDate() + 30);
+    future.setDate(future.getDate() + days);
     var dd = String(future.getDate()).padStart(2, '0');
     var mm = String(future.getMonth() + 1).padStart(2, '0'); //January is 0!
     var yyyy = future.getFullYear();
@@ -297,36 +281,22 @@ function date(){
 }
 
 //when user clicks hold on particular book
-app.post("/hold_request/:isbn",function(req,res){
+app.post("/hold_request/:isbn",async function(req,res){
     if(req.isAuthenticated()){
         let isbn=req.params.isbn;
-        
-        con.connect(function(err) {
-            let sql=`Delete from hold_request where ID="${req.user.id}" and isbn="${isbn}"`;
-            console.log(sql);
-            con.query(sql ,function (err, result) {
-            if (err) throw err;
-            console.log(result);
-            })
-        })
-        con.connect(function(err) {
-            let sql=`update books_collection set current_status="on-loan-and-on-hold" where ISBN=${isbn}`;
-            console.log(sql);
-            con.query(sql ,function (err, result) {
-            if (err) throw err;
-            console.log(result);
-            })
-        })
-        con.connect(function(err) {
-            let sql=`Insert into hold_request value("${req.user.id}","${isbn}","${date()}",${Date.now()})`;
-            console.log(sql);
-            con.query(sql ,function (err, result) {
-            if (err) throw err;
-            console.log(result);
-            res.redirect("/book_details/"+isbn);
-            })
-        })
-        
+        let sql=`Delete from hold_request where ID="${req.user.id}" and isbn="${isbn}"`;
+        let result1=await cquery(sql);
+        console.log(result1);
+        sql=`update books_collection set current_status="on-loan-and-on-hold" where ISBN=${isbn}`;
+        let result2=await cquery(sql);
+        console.log(result2);
+        sql=`update books_collection set current_status="on-loan-and-on-hold" where ISBN=${isbn}`;
+        let result3=await cquery(sql);
+        console.log(result3);
+        sql=`Insert into hold_request value("${req.user.id}","${isbn}","${date()}",${Date.now()})`;
+        let result4=await cquery(sql);
+        console.log(result4);
+        res.redirect("/book_details/"+isbn);        
     }
     else{
         res.redirect("/login");
@@ -337,56 +307,32 @@ app.post("/hold_request/:isbn",function(req,res){
 app.post("/issue/:isbn",async function(req,res){
     if(req.isAuthenticated()){
         let isbn=req.params.isbn;
-        let sql=`select copy_number from all_books where status=1 and ISBN=${isbn}`;
+        if(req.user.id[0]=='s'){
+            let sql=`Select Number_of_issued_books from student where s_id="${req.user.id}"`;
+            let result=await cquery(sql);
+            if(result[0].Number_of_issued_books===3){
+                res.write("Issue limit exceeded")
+                res.render("/book_details/"+isbn);
+            }
+            else{
+                sql=`UPDATE student set Number_of_issued_books=Number_of_issued_books+1 where s_id="${req.user.id}"`;
+                result=await cquery(sql);
+            }
+        }
+        sql=`select copy_number from all_books where current_status=1 and ISBN=${isbn}`;
         let result1=await cquery(sql);
         let copy_number= result1[0].copy_number;
         let size = result1.length;
-        sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue()}",0)`;
+        sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue((req.user.id)[0])}",0)`;
         let result2=await cquery(sql);
         console.log("result2= "+result2);
         if(size==1){
             let sql=`update books_collection set current_status="on-loan" where ISBN=${isbn}`;
             let result3=await cquery(sql);
         }
-        sql=`update all_books set status=0 where ISBN=${isbn} and copy_number=${copy_number}`;
+        sql=`update all_books set current_status=0 where ISBN=${isbn} and copy_number=${copy_number}`;
         let result4=await cquery(sql);
         console.log("result4= "+result4);
-        // con.connect(function(err) {
-        //     let sql=`select copy_number from all_books where status=1 and ISBN=${isbn}`;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //         if (err) throw err;
-        //         console.log(result);
-        //         copy_number=result[0].copy_number;
-        //         size=result.length;
-        //     })
-        // })
-        // con.connect(function(err) {
-        //     let sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue()}",0)`;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //         if (err) throw err;
-        //         console.log(result);
-        //     })
-        // })
-        // if(size===1){
-        //     con.connect(function(err) {
-        //         let sql=`update books_collection set current_status="on-loan" where ISBN=${isbn}`;
-        //         console.log(sql);
-        //         con.query(sql ,function (err, result) {
-        //         if (err) throw err;
-        //         console.log(result);
-        //         })
-        //     })
-        // }
-        // con.connect(function(err) {
-        //     let sql=`update all_books set status=0 where ISBN=${isbn} and copy_number=${copy_number}`;
-        //     console.log(sql);
-        //     con.query(sql ,function (err, result) {
-        //     if (err) throw err;
-        //     console.log(result);
-        //     })
-        // })
         res.redirect("/book_details/"+isbn);
     }
     else{
@@ -395,29 +341,12 @@ app.post("/issue/:isbn",async function(req,res){
 })
 
 //displays currentyly issued books of user
-app.get("/dashboard/issued_books",function(req,res){
+app.get("/dashboard/issued_books",async function(req,res){
     if(req.isAuthenticated()){
-
-    }
-    else{
-        res.redirect("/login");
-    }
-})
-
-//show books added by user in book shelf
-app.get("/dashboard/book_shelf",function(req,res){
-    if(req.isAuthenticated()){
-
-    }
-    else{
-        res.redirect("/login");
-    }
-})
-
-//adds book to book shelf on clicking add to shelf in book details page
-app.post("/dashboard/book_shelf",function(req,res){
-    if(req.isAuthenticated()){
-
+        let sql=`Select * from booksissued where ID="${req.user.id}" and return_status=0`;
+        let result=await cquery(sql);
+        console.log(result);
+        res.render("user_issued_books",{results: result});
     }
     else{
         res.redirect("/login");
@@ -425,14 +354,44 @@ app.post("/dashboard/book_shelf",function(req,res){
 })
 
 //shows current active holds
-app.get("/dashboard/holds_placed",function(req,res){
+app.get("/dashboard/holds_placed",async function(req,res){
     if(req.isAuthenticated()){
-
+        let sql=`Select books_collection.title,books_collection.ISBN,hold_request.Date_of_hold from books_collection natural join hold_request where ID="${req.user.id}"`;
+        let result=await cquery(sql);
+        console.log(result);
+        res.render("user_holds",{results: result});
     }
     else{
         res.redirect("/login");
     }
 })
+
+//show books added by user in book shelf
+app.get("/dashboard/book_shelf",async function(req,res){
+    if(req.isAuthenticated()){
+        let sql=`Select title,ISBN from books_collection where ISBN in (Select ISBN from user_book_shelf where ID="${req.user.id}")`
+        let result=await cquery(sql);
+        res.render("user_book_shelf",{results: result})
+    }
+    else{
+        res.redirect("/login");
+    }
+})
+
+//adds book to book shelf on clicking add to shelf in book details page
+app.post("/book_shelf/:isbn",async function(req,res){
+    if(req.isAuthenticated()){
+        let isbn=req.params.isbn;
+        let sql=`INSERT into user_book_shelf value("${req.user.id}","${isbn}")`;
+        let result=await cquery(sql);
+        res.redirect("/book_details/"+isbn);
+    }
+    else{
+        res.redirect("/login");
+    }
+})
+
+
 
 
 /*
