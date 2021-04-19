@@ -4,6 +4,7 @@ let port = 3000;
 let bodyParser = require('body-parser');
 let session = require('express-session');
 let cookieParser = require('cookie-parser');
+let nodemailer = require('nodemailer');
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}));
@@ -18,12 +19,20 @@ app.use((req, res, next)=>{
     next()
 })
 
+let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'head.cryptosense@gmail.com',
+        pass: 'projectgroup10'
+    }
+})
+
 const mysql=require('mysql');
 var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Prasheel@4",
+    password: "5930",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -49,6 +58,19 @@ const cquery = async (sql,req,res)=>{
             if(err) console.log(err);
             else resolve(result);
         })
+    })
+}
+
+function sendEmail(to, subject, text) {
+    let mailOptions = {
+        from: 'head.cryptosense@gmail.com',
+        to: to,
+        subject: subject,
+        text: text
+    }
+    transporter.sendMail(mailOptions, function (err, info) {
+        if (err) console.log(err);
+        else console.log(info);
     })
 }
 
@@ -293,7 +315,7 @@ function date(){
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
     var yyyy = today.getFullYear();
     
-    today = yyyy + '/' + mm + '/' + dd;
+    today = yyyy + '-' + mm + '-' + dd;
     return today;
 }
 
@@ -561,6 +583,51 @@ app.post("/updateBook", async function (req, res) {
 
     res.redirect('/updateBook');
 })
+
+app.get('/powerButton', async function (req, res) {
+    let sql = `SELECT * from booksissued WHERE overdue_date < "${date()}" AND return_status = 0`;
+    let result = await cquery(sql, req, res);
+    let to, subject, text;
+    subject = `Book Overdue Email`;
+    for (let i = 0; i < result.length; i++) {
+        let id = result[i]['ID'];
+        sql = `SELECT email FROM student WHERE s_id = "${id}"`;
+        let result2 = await cquery(sql, req, res);
+        to = result2[0]['email'];
+        text = `Hello! Your book with ISBN "${result[i]['ISBN']}", copy number ${result[i]['copy_number']} has been overdue on "${result[i]['Overdue_date']}". Kindly return the book.\n
+            Thank You`;
+        sendEmail(to, subject, text);
+        sql = `UPDATE student SET unpaid_fines = unpaid_fines + 2 WHERE s_id = "${id}"`;
+        await cquery(sql, req, res);
+    }
+    sql = `SELECT * FROM student WHERE unpaid_fines > 0`;
+    result = await cquery(sql, req, res);
+    subject = `Please pay you library fines`
+    for (let i = 0; i < result.length; i++) {
+        to = result[i]['email'];
+        text = `You have unpaid fines of Rs ${result[i]['unpaid_fines']} in your IIT INDORE library's account.\n
+            Please pay them.\n
+            Thank You`;
+        sendEmail(to, subject, text);
+    }
+    sql = `SELECT * FROM booksissued WHERE return_status = 2`;
+    result = await cquery(sql, req, res);
+    for (let i = 0; i < result.length; i++) {
+        let id = result[i]['ID'];
+        sql = `SELECT email FROM student WHERE s_id = "${id}"`;
+        let result2 = await cquery(sql, req, res);
+        to = result2[0]['email'];
+        text = `Hello ! You are receiving this mail because you have put a hold on the book with ISBN "${result[i]['ISBN']}" AND\n
+            this hold will become unavailable on ${result[i]['Overdue_date']}.\n
+            So if you want this book, Please issue it before your hold becomes invalid.\n
+            Thank You`;
+        sendEmail(to, subject, text);
+    }
+    res.send(200);
+})
+
+
+
 /*
 Librarian stuff ends
  */
