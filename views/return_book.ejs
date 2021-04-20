@@ -1,17 +1,13 @@
 <%- include('partials/header') %>
 <div class="container mt-5">
-    <h1>Register</h1>
-
-    <%if (message) {%>
-    <strong><%=message['intro']%></strong> <p><%=message['message']%></p>
-    <%}%>
+    <h1>Return</h1>
 
     <div class="row">
         <div class="col-sm-8">
             <div class="card">
                 <div class="card-body">
 
-                    <form action="/addShelf" method="POST">
+                    <form action="/returnBook" method="POST">
                         <div class="form-group">
                             <label for="ISBN">ISBN</label>
                             <input type="text" class="form-control" name="ISBN">
@@ -20,7 +16,7 @@
                             <label for="copy_number">Copy Number</label>
                             <input type="number" class="form-control" name="copy_number">
                         </div>
-                        <button type="submit" class="btn btn-dark">Add Shelf</button>
+                        <button type="submit" class="btn btn-dark">Return</button>
                     </form>
 
                 </div>

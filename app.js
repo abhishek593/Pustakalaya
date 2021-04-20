@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Arastu#1719",
+    password: "Prasheel@4",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -181,7 +181,7 @@ app.post("/register",async function(req,res){
                         if (err) throw err;
                     })
                 })
-                res.redirect("/dashboard/search_book");
+                res.redirect("/dashboard");
             });
         }
     })
@@ -262,19 +262,41 @@ app.get("/book_details/:isbn",async function(req,res){
         values=result1;
         sql = 'Select * from all_books where ISBN='+isbn;
         let result2=await cquery(sql);
+        let copy_number;
         result2.forEach(function(copy){
             if(copy.current_status===1){
                 hold=0;
+                copy_number=copy.copy_number;
             }
         })
         copies=result2;
+        //if one copy of book is available we check whether user already has the book or not
         if(hold===0){
-            sql=`select id from booksissued where ISBN="${isbn}" `;
+            sql=`select id from booksissued where ISBN="${isbn}" and ID="${req.user.id}" and return_status=0`;
             let result3=await cquery(sql);
+            console.log("result3= "+result3)
             if(result3.length===0){
                 issue=1;
             }
         }
+        console.log("issue "+issue);
+        //if a book on hold then check if user is authorized or not for issue
+        sql=`select * from booksissued where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`;
+        let result4=await cquery(sql);
+        console.log("result4== "+result4);
+        // console.log("result id "+result4[0].ID);
+        if(result4.length>0){
+            if(req.user.id==result4[0].ID){
+                console.log("reached");
+                issue=1;
+                hold=0;
+            }
+            else{
+                issue=0;
+                hold=1;
+            }
+        }
+        //check if current book exists in users shelf
         sql=`select isbn from user_book_shelf where ID="${req.user.id}"`;
         let result=await cquery(sql);
         let book_shelf=1;
@@ -295,6 +317,9 @@ function overdue(c){
     let days;
     if(c=='s'){
         days=30;
+    }
+    else if(c=='n'){
+        days=10;
     }
     else{
         days=60;
@@ -345,7 +370,9 @@ app.post("/hold_request/:isbn",async function(req,res){
 //when user clicks on issue
 app.post("/issue/:isbn",async function(req,res){
     if(req.isAuthenticated()){
+        //isbn of book to issue
         let isbn=req.params.isbn;
+        //if issuer is student we check for his limit and update that
         if(req.user.id[0]=='s'){
             let sql=`Select Number_of_issued_books from student where s_id="${req.user.id}"`;
             let result=await cquery(sql);
@@ -358,18 +385,44 @@ app.post("/issue/:isbn",async function(req,res){
                 result=await cquery(sql);
             }
         }
-        sql=`select copy_number from all_books where current_status=1 and ISBN=${isbn}`;
+        //to find the available copy number
+        sql=`select copy_number from all_books where current_status=1 and ISBN="${isbn}"`;
         let result1=await cquery(sql);
         let copy_number= result1[0].copy_number;
         let size = result1.length;
-        sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue((req.user.id)[0])}",0)`;
-        let result2=await cquery(sql);
-        console.log("result2= "+result2);
-        if(size==1){
-            let sql=`update books_collection set current_status="on-loan" where ISBN=${isbn}`;
-            let result3=await cquery(sql);
+        console.log("copyNumber= "+copy_number);
+        //checking if on hold
+        sql=`select id from booksissued where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
+        let answer=await cquery(sql);
+        if(answer.length>0){
+            sql=`UPDATE booksissued set return_status=0, overdue_date="${overdue(req.user.id[0])}" where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
+            await cquery(sql);
+            //checking if more holds exist on current book 
+            sql=`Select id from hold_request where ISBN="${isbn}"`
+            let result6=await cquery(sql);
+            let status;
+            if(result6.length>0){
+                status="on-loan-and-on-hold";
+            }
+            else{
+                status="on-loan";
+            }
+            console.log("status "+status);
+            sql=`update books_collection set current_status="${status}" where ISBN="${isbn}"`;
+            await cquery(sql);
+            console.log("DONE");
         }
-        sql=`update all_books set current_status=0 where ISBN=${isbn} and copy_number=${copy_number}`;
+        //
+        else{
+            sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue((req.user.id)[0])}",0)`;
+            let result2=await cquery(sql);
+            console.log("result2= "+result2);
+            if(size==1){
+                let sql=`update books_collection set current_status="on-loan" where ISBN="${isbn}"`;
+                let result3=await cquery(sql);
+            }
+        }
+        sql=`update all_books set current_status=0 where ISBN="${isbn}" and copy_number="${copy_number}"`;
         let result4=await cquery(sql);
         console.log("result4= "+result4);
         res.redirect("/book_details/"+isbn);
@@ -438,8 +491,10 @@ Librarian stuff starts
 In all these cases we want to add a check if id starts from l or not
  */
 app.get("/librarian_special", function (req, res) {
-    if (!req.isAuthenticated()) res.redirect("/login");
-    return res.render("librarian_special_dashboard");
+    if (!req.isAuthenticated()) {res.redirect("/login");}
+    else{
+        return res.render("librarian_special_dashboard");
+    }
 })
 
 const ON_LOAN = "on-loan";
@@ -453,6 +508,7 @@ app.get("/addBook", function (req, res) {
 
 app.post("/addBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
+    else{
     let sql = `SELECT * FROM all_books WHERE ISBN = "${req.body['ISBN']}" AND present_status = 1`;
     let result = await cquery(sql, req, res);
     let x = 0;
@@ -481,6 +537,7 @@ app.post("/addBook", async function (req, res) {
         await cquery(sql, req, res);
     }
     return res.render("librarian_special_dashboard");
+    }
 })
 
 app.get("/deleteBook", function (req, res) {
@@ -537,17 +594,69 @@ app.get("/returnBook", function (req, res) {
 
 app.post("/returnBook", async function (req, res) {
     if (!req.isAuthenticated()) res.redirect("/login");
-    let sql = `UPDATE booksissued SET return_status = 1 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = ${req.body['copy_number']}`;
+    let sql = `Select id from booksissued where ISBN = "${req.body['ISBN']}" AND copy_number = "${req.body['copy_number']}"`
+    let value=await cquery(sql);
+    let id=value[0].id;
+    sql = `UPDATE booksissued SET return_status = 1 WHERE ISBN = "${req.body['ISBN']}" AND copy_number = "${req.body['copy_number']}"`;
     await cquery(sql, req, res);
+    console.log(1);
     sql = `UPDATE books_collection SET current_status = "${ON_SHELF}" WHERE ISBN = "${req.body['ISBN']}"`;
     await cquery(sql, req, res);
-    sql = `UPDATE all_books SET current_status = 1 WHERE ISBN = "${req.body['ISBN']}"`;
+    console.log(2);
+    sql = `UPDATE all_books SET current_status = 1 WHERE ISBN = "${req.body['ISBN']}" and copy_number="${req.body['copy_number']}"`;
     await cquery(sql, req, res);
+    console.log(3);
+    sql = `UPDATE student SET Number_of_issued_books = Number_of_issued_books - 1 WHERE s_id = "${id}"`;
+    await cquery(sql, req, res);
+    console.log(4);
     //check if someone needs this book
     sql = `SELECT ID FROM hold_request WHERE ISBN = "${req.body['ISBN']}" ORDER BY date_of_hold, time_of_hold LIMIT 1`;
+    console.log(sql);
+    
     let result = await cquery(sql, req, res);
-    sql = `UPDATE student SET Number_of_issued_books = Number_of_issued_books - 1 WHERE ID = "${result[0]['ID']}"`;
+    console.log(5);
     //prasheel add the issue function here
+    console.log(result);
+    if(result.length>0){
+        let id="";
+        console.log(6);
+        for(var i=0;i<result.length;i++){
+            if(result[i].ID[0]=='s'){
+                //if valid student then we store his id
+                sql= `Select Number_of_issued_books from student where s_id="${result[i].ID}"`
+                let result1=await cquery(sql, req, res);
+                console.log("id="+result[i].ID+result1[0].Number_of_issued_books);
+                if(result1[0].Number_of_issued_books<3){
+                    id=result[i].ID;
+                    break;
+                }
+                
+            }
+            else{
+                id=result[i].ID;
+                break;
+            }
+        }
+        console.log("selected id "+id);
+        if(id.length>0){
+            sql=`Select copy_number from all_books where ISBN="${req.body['ISBN']}" and current_status=1`
+            let result2=await cquery(sql, req, res);
+            console.log(7);
+            sql=`INSERT into booksissued value("${req.body['ISBN']}","${result2[0].copy_number}","${id}","${date()}","${overdue('n')}",2)`
+            await cquery(sql, req, res);
+            console.log(8);
+            // sql=`UPDATE all_books set current_status=0 where ISBN="${req.body['ISBN']}" and copy_number="${result2[0].copy_number}"`
+            // await cquery(sql, req, res);
+            // console.log(9);
+            sql=`UPDATE books_collection set current_status="${ON_HOLD}" where ISBN="${req.body['ISBN']}"`
+            await cquery(sql, req, res);
+            console.log(10);
+            sql=`Delete from hold_request where ID="${id}" and ISBN="${req.body['ISBN']}"`;
+            await cquery(sql, req, res);
+            console.log(sql);
+            console.log(11);
+        }
+    }
     return res.render("librarian_special_dashboard");
 })
 
@@ -600,22 +709,96 @@ app.get('/powerButton', async function (req, res) {
         sql = `UPDATE student SET unpaid_fines = unpaid_fines + 2 WHERE s_id = "${id}"`;
         await cquery(sql, req, res);
     }
+    console.log(1);
     sql = `SELECT * FROM student WHERE unpaid_fines > 0`;
     result = await cquery(sql, req, res);
     subject = `Please pay you library fines`
     for (let i = 0; i < result.length; i++) {
+        console.log("result[i] "+result[i]);
         to = result[i]['email'];
         text = `You have unpaid fines of Rs ${result[i]['unpaid_fines']} in your IIT INDORE library's account.\n
             Please pay them.\n
             Thank You`;
         sendEmail(to, subject, text);
     }
+    console.log(2);
+    //giving book to next hold request
+
+    sql = `SELECT * FROM booksissued WHERE return_status = 2 and overdue_date<"${date()}"`;
+    let resu=await cquery(sql, req, res);
+    sql = `DELETE FROM booksissued WHERE return_status = 2 and overdue_date<"${date()}"`;
+    await cquery(sql,req,res);
+    for(var i=1;i<=resu.length;i++){
+        let isbn=resu[i].ISBN;
+        let copy_number=resu[i].copy_number;
+        sql = `UPDATE books_collection SET current_status = "${ON_SHELF}" WHERE ISBN = "${isbn}"`;
+        await cquery(sql, req, res);
+        console.log(2);
+        sql = `UPDATE all_books SET current_status = 1 WHERE ISBN = "${isbn}" and copy_number="${copy_number}"`;
+        await cquery(sql, req, res);
+        console.log(3);
+        console.log(4);
+        //check if someone needs this book
+        sql = `SELECT ID FROM hold_request WHERE ISBN = "${isbn}" ORDER BY date_of_hold, time_of_hold LIMIT 1`;
+        console.log(sql);
+        
+        let result = await cquery(sql, req, res);
+        console.log(5);
+        //prasheel add the issue function here
+        console.log(result);
+        if(result.length>0){
+            let id="";
+            console.log(6);
+            for(var i=0;i<result.length;i++){
+                if(result[i].ID[0]=='s'){
+                    //if valid student then we store his id
+                    sql= `Select Number_of_issued_books from student where s_id="${result[i].ID}"`
+                    let result1=await cquery(sql, req, res);
+                    console.log("id="+result[i].ID+result1[0].Number_of_issued_books);
+                    if(result1[0].Number_of_issued_books<3){
+                        id=result[i].ID;
+                        break;
+                    }
+                    
+                }
+                else{
+                    id=result[i].ID;
+                    break;
+                }
+            }
+            console.log("selected id "+id);
+            if(id.length>0){
+                sql=`Select copy_number from all_books where ISBN="${isbn}" and current_status=1`
+                let result2=await cquery(sql, req, res);
+                sql=`INSERT into booksissued value("${isbn}","${result2[0].copy_number}","${id}","${date()}","${overdue('n')}",2)`
+                await cquery(sql, req, res);
+                sql=`UPDATE books_collection set current_status="${ON_HOLD}" where ISBN="${isbn}"`
+                await cquery(sql, req, res);
+                sql=`Delete from hold_request where ID="${id}" and ISBN="${isbn}"`;
+                await cquery(sql, req, res);
+                console.log(sql);
+            }
+        }
+    }
+    console.log(4);
+    //
     sql = `SELECT * FROM booksissued WHERE return_status = 2`;
     result = await cquery(sql, req, res);
     for (let i = 0; i < result.length; i++) {
+        console.log("result-> "+result[i].ID);
         let id = result[i]['ID'];
-        sql = `SELECT email FROM student WHERE s_id = "${id}"`;
+        if(id[0]=='s'){
+            sql = `SELECT email FROM student WHERE s_id = "${id}"`;
+        }
+        else if(id[0]=='f'){
+            sql = `SELECT email FROM faculty WHERE f_id = "${id}"`;
+        }
+        else{
+            sql = `SELECT email FROM librarian WHERE l_id = "${id}"`;
+        }
         let result2 = await cquery(sql, req, res);
+        console.log(12,result2[0]);
+        console.log(result2[0].email);
         to = result2[0]['email'];
         text = `Hello ! You are receiving this mail because you have put a hold on the book with ISBN "${result[i]['ISBN']}" AND\n
             this hold will become unavailable on ${result[i]['Overdue_date']}.\n
