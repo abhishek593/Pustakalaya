@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "5930",
+    password: "Arastu#1719",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -839,7 +839,7 @@ app.get("/dashboard/feedback", (req, res) => {
 });
 
 app.post("/dashboard/feedback", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         let result=await cquery('SELECT * FROM Book_Feedback');
         let fid= 'R' + (result.length).toString();
         let sql= 'INSERT INTO Book_Feedback (Feedback_id, ISBN, Reviews, rating, ID) VALUES ("'+fid+'", "'+req.body.ISBN+'", "'+req.body.Reviews+'", "'+req.body.rating+'", "'+req.user.id+'")';
@@ -852,7 +852,7 @@ app.post("/dashboard/feedback", async (req, res) => {
 });
 
 app.get("/dashboard/friend_list", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql;
         if(req.user.id[0] == 's')
@@ -876,7 +876,7 @@ app.get("/dashboard/friend_list", async (req, res) => {
 });
 
 app.get("/remove_friend/:id", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql= 'DELETE FROM friends WHERE id_1 = "'+req.user.id+'" AND id_2 = "'+req.params.id+'"';
         let result=await cquery(sql);
@@ -888,7 +888,7 @@ app.get("/remove_friend/:id", async (req, res) => {
 });
 
 app.get("/dashboard/search_people", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql;
         sql= 'SELECT s_id, name FROM student WHERE s_id <> "'+req.user.id+'" AND s_id NOT IN (SELECT s_id FROM student JOIN friends ON student.s_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'")';
@@ -905,7 +905,7 @@ app.get("/dashboard/search_people", async (req, res) => {
 });
 
 app.get("/add_friend/:id", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql= 'INSERT INTO friends(id_1, id_2) VALUES ("'+req.user.id+'", "'+req.params.id+'")';
         let result=await cquery(sql);
@@ -917,7 +917,7 @@ app.get("/add_friend/:id", async (req, res) => {
 });
 
 app.get("/dashboard/recommendations", async (req, res) => {
-    if(!req.isAuthenticated()) {
+    if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql;
         sql= 'SELECT ISBN, title, author FROM books_collection WHERE shelf_id IN (SELECT shelf_id FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id = "'+req.user.id+'"))';
