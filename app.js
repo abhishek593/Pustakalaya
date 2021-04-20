@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "5930",
+    password: "Arastu#1719",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -631,6 +631,113 @@ app.get('/powerButton', async function (req, res) {
 /*
 Librarian stuff ends
  */
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+app.get("/dashboard/feedback", (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    res.render("feedback");
+});
+
+app.post("/dashboard/feedback", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    let result=await cquery('SELECT * FROM Book_Feedback');
+    let fid= 'R' + (result.length).toString();
+    let sql= 'INSERT INTO Book_Feedback (Feedback_id, ISBN, Reviews, rating, ID) VALUES ("'+fid+'", "'+req.body.ISBN+'", "'+req.body.Reviews+'", "'+req.body.rating+'", "'+req.user.id+'")';
+    let result2=await cquery(sql);
+    console.log(result2);
+    res.redirect("/dashboard");
+});
+
+app.get("/dashboard/friend_list", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    let sql;
+    if(req.user.id[0] == 's')
+    {
+        sql= 'SELECT s_id AS id, name FROM student JOIN friends ON student.s_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+    }
+    else if(req.user.id[0] == 'f')
+    {
+        sql= 'SELECT f_id AS id, name FROM faculty JOIN friends ON faculty.f_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+    }
+    else
+    {
+        sql= 'SELECT l_id AS id, name FROM librarian JOIN friends ON librarian.l_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+    }
+    let result=await cquery(sql);
+    console.log(result);
+    res.render("friendsList", {data: result});
+});
+
+app.get("/remove_friend/:id", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    let sql= 'DELETE FROM friends WHERE id_1 = "'+req.user.id+'" AND id_2 = "'+req.params.id+'"';
+    let result=await cquery(sql);
+    console.log(result);
+    res.render("deletedFriend", {data: req.params.id});
+});
+
+app.get("/dashboard/search_people", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    let sql;
+    sql= 'SELECT s_id, name FROM student WHERE s_id <> "'+req.user.id+'" AND s_id NOT IN (SELECT s_id FROM student JOIN friends ON student.s_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'")';
+    let result1=await cquery(sql);
+    sql= 'SELECT f_id, name FROM faculty WHERE f_id <> "'+req.user.id+'" AND f_id NOT IN (SELECT f_id FROM faculty JOIN friends ON faculty.f_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'")';
+    let result2=await cquery(sql);
+    sql= 'SELECT l_id, name FROM librarian WHERE l_id <> "'+req.user.id+'" AND l_id NOT IN (SELECT l_id FROM librarian JOIN friends ON librarian.l_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'")';
+    let result3=await cquery(sql);
+    console.log(result1, result2, result3);
+    res.render("searchPeople", {data1: result1, data2: result2, data3: result3});
+});
+
+app.get("/add_friend/:id", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    let sql= 'INSERT INTO friends(id_1, id_2) VALUES ("'+req.user.id+'", "'+req.params.id+'")';
+    let result=await cquery(sql);
+    console.log(result);
+    res.render("addedFriend", {data: req.params.id});
+});
+
+app.get("/dashboard/recommendations", async (req, res) => {
+    if(!req.isAuthenticated())
+    {
+        res.redirect("/login");
+    }
+    console.log(req.user.id);
+    let sql;
+    sql= 'SELECT ISBN, title, author FROM books_collection WHERE shelf_id IN (SELECT shelf_id FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id = "'+req.user.id+'"))';
+    let result1=await cquery(sql);
+    sql= 'SELECT ISBN, title, author FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id IN (SELECT id_2 FROM friends WHERE id_1 = "'+req.user.id+'"))';
+    let result2=await cquery(sql);
+    console.log(result1, result2);
+    res.render("recommendations", {data1: result1, data2: result2});
+});
+
 
 app.listen(process.env.PORT || port,function(){
     console.log("Server running at port "+port);

@@ -1,0 +1,41 @@
+<%- include('partials/header') %>
+<div class="container mt-5">
+  <h1>Feedback</h1>
+  <div class="row">
+    <div class="col-sm-8">
+      <div class="card">
+        <div class="card-body">
+
+          <!-- Makes POST request to /feedback route -->
+          <form action="/feedback" method="POST">
+            <div class="form-group">
+                <label for="ISBN">ISBN</label>
+                <input type="text" class="form-control" name="ISBN">
+            </div>
+            <div class="form-group">
+                <label for="Reviews"><br>Reviews</label>
+                <input type="text" class="form-control" name="Reviews">
+            </div>
+            <p>Rating</p>
+            <div class="form-group">
+                <input type="radio" id="rating5" name="rating" value="5">
+                <label for="rating5">&#9733;&#9733;&#9733;&#9733;&#9733;</label><br>
+                <input type="radio" id="rating4" name="rating" value="4">
+                <label for="rating4">&#9733;&#9733;&#9733;&#9733;</label><br>
+                <input type="radio" id="rating3" name="rating" value="3">
+                <label for="rating3">&#9733;&#9733;&#9733;</label><br>
+                <input type="radio" id="rating2" name="rating" value="2">
+                <label for="rating2">&#9733;&#9733;</label><br>
+                <input type="radio" id="rating1" name="rating" value="1">
+                <label for="rating1">&#9733;</label><br><br>
+            </div>
+            <button type="submit" class="btn btn-dark">Submit</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/header') %>

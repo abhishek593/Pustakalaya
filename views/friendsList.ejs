@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<table border="1px">
+    <thead>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Action</th>
+    </thead>
+    <tbody>
+        
+            <% data.forEach(function(result){    %>
+            <tr>
+                <td>
+                    <%= result.id %>
+                </td>
+                <td><%= result.name %></td>
+                <td><a href="/remove_friend/<%= result.id %>">Remove</a></td>
+            </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
+<%- include('partials/footer') %>

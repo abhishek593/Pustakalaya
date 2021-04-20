@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+<table border="1px">
+    <thead>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Action</th>
+    </thead>
+    <tbody>
+        
+            <% data1.forEach(function(result){    %>
+            <tr>
+                <td><%= result.s_id %></td>
+                <td><%= result.name %></td>
+                <td><a href="/add_friend/<%= result.s_id %>">Add</a></td>
+            </tr>
+            <% })   %>
+            <% data2.forEach(function(result){    %>
+            <tr>
+                <td><%= result.f_id %></td>
+                <td><%= result.name %></td>
+                <td><a href="/add_friend/<%= result.f_id %>">Add</a></td>
+            </tr>
+            <% })   %>
+            <% data3.forEach(function(result){    %>
+              <tr>
+                <td><%= result.l_id %></td>
+                <td><%= result.name %></td>
+                <td><a href="/add_friend/<%= result.l_id %>">Add</a></td>
+              </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
+<%- include('partials/footer') %>

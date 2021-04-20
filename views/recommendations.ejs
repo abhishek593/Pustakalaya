@@ -1,0 +1,47 @@
+<%- include('partials/header') %>
+<h3>By your Personal Bookshelf</h3>
+<table border="1px">
+    <thead>
+        <th>ISBN</th>
+        <th>Title</th>
+        <th>Author</th>
+    </thead>
+    <tbody>
+        
+            <% data1.forEach(function(result){    %>
+            <tr>
+                <td>
+                    <a href="/book_details/<%= result.ISBN %>"><%= result.ISBN %></a>
+                </td>
+                <td><%= result.title %></td>
+                <td><%= result.author %></td>
+            </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
+<br>
+<h3>By your Friends' Bookshelf</h3>
+<table border="1px">
+    <thead>
+        <th>ISBN</th>
+        <th>Title</th>
+        <th>Author</th>
+    </thead>
+    <tbody>
+        
+            <% data2.forEach(function(result){    %>
+            <tr>
+                <td>
+                    <a href="/book_details/<%= result.ISBN %>"><%= result.ISBN %></a>
+                </td>
+                <td><%= result.title %></td>
+                <td><%= result.author %></td>
+            </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
+<%- include('partials/footer') %>
