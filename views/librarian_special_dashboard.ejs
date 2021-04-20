@@ -1,32 +1,54 @@
 <%- include('partials/header') %>
 <div class="container mt-5">
-<!--    <h1>Librarian </h1>-->
+    <h1>Librarian </h1>
 
-    <form action="/addBook" method="get">
-        <button type="submit" class="btn btn-dark">Add New Book</button>
-    </form>
+    <style>
+        div {
+            padding: 30px 20px 30px 60px;
+        }
+    </style>
+        <form action="/addBook" method="get">
+            <div class="form-group">
+                <button type="submit" class="btn btn-dark form-control" >Add New Book</button>
+            </div>
+        </form>
 
     <form action="/deleteBook" method="get">
-        <button type="submit" class="btn btn-dark">Delete Book</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Delete Book</button>
+        </div>
     </form>
 
     <form action="/updateBook" method="get">
-        <button type="submit" class="btn btn-dark">Update Book</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Update Book</button>
+        </div>
     </form>
 
     <form action="/returnBook" method="get">
-        <button type="submit" class="btn btn-dark">Return Book</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Return Book</button>
+        </div>
     </form>
 
     <form action="/addShelf" method="get">
-        <button type="submit" class="btn btn-dark">Add Shelf</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Add Shelf</button>
+        </div>
     </form>
 
     <form action="/powerButton" method="get">
-        <button type="submit" class="btn btn-dark">Send all types of mails</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Send all types of mails</button>
+        </div>
+    </form>
+
+    <form action="/powerButton" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control">Send all types of mails</button>
+        </div>
     </form>
 
     </div>
-</div>
 
 <%- include('partials/footer') %>
