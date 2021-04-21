@@ -5,13 +5,23 @@
     <strong><%=message['intro']%></strong> <p><%=message['message']%></p>
 </div>
 <%}%>
-<h1><%= details[0].title %></h1>
-<h2><%= details[0].ISBN %></h2>
-<h2><%- details[0].author %></h2>
-<h2><%= details[0].year_of_pub %></h2>
-<h4><%= details[0].shelf_id %></h4>
-<h4><%= details[0].current_status %></h4>
-<h4><%= avgRating %></h4>
+<div style="text-align: center; align-items: center;">
+<div class="jumbotron" style="text-align: center;">
+    <h1 class="display-4"><%= details[0].title %></h1>
+    <h3 class="lead">ISBN: <%= details[0].ISBN %></h3>
+    <h3>Rating: <%= avgRating %></h3>
+    <h3>Author: <%- details[0].author %></h3>
+    <h5>Year of Publication: <%= details[0].year_of_pub %></h5>
+    <h5>Shelf: <%= details[0].shelf_id %>, Status: <%= details[0].current_status %></h5>
+    <form action="/book_shelf/<%= details[0].ISBN %>" method="post">
+        <% if(book_shelf){  %>
+            <button class="btn btn-primary btn-lg" type="submit" id="Issue">Add to Book Shelf</button>
+        <%  }else{ %>
+            <p class="lead">Present in Book_shelf</h4>
+        <% } %> 
+    </form>
+</div>
+<br>
 <table class="table table-bordered table-hover">
     <thead class="thead-dark">
         <th>Copy Number</th>
@@ -33,28 +43,29 @@
     </tbody>
     
 </table>
-<form action="/hold_request/<%= details[0].ISBN %>" method="post">
+<br>
+<form style="align-items: center;" action="/hold_request/<%= details[0].ISBN %>" method="post">
     <% if(hold){  %>
-        <button type="submit" id="Hold">Hold</button>
+        <button class="btn btn-secondary" type="submit" id="Hold">Hold</button>
     <%  }else{  %>
-        <button type="submit" role="button" id="Hold" disabled>Hold</button>
+        <button class="btn btn-secondary" type="submit" role="button" id="Hold" disabled>Hold</button>
     <%  }  %>
 </form>
-<form action="/issue/<%= details[0].ISBN %>" method="post">
+<br>
+<form style="align-items: center;" action="/issue/<%= details[0].ISBN %>" method="post">
     <% if(issue){  %>
-        <button type="submit" id="Issue">issue</button>
+        <button class="btn btn-dark" type="submit" id="Issue">Issue</button>
     <%  } %>
 </form>
 
-<form action="/book_shelf/<%= details[0].ISBN %>" method="post">
-    <% if(book_shelf){  %>
-        <button type="submit" id="Issue">Add to Book Shelf</button>
-    <%  }else{ %>
-        <h4>Book Exists in Book_shelf</h4>
-    <% } %> 
+<br>
+<form action="/dashboard/feedback/<%= Isbn%>" method="GET">
+    <button type="submit" class="btn btn-info">Give Feedback</button>
 </form>
-<a href="/dashboard/feedback/<%= Isbn%>">Give Feedback</a>
+<br>
+<br>
 <h4>User Feedbacks</h4>
+<br>
 <table class="table table-bordered table-hover" border="1px">
     <thead class="thead-dark">
         <th>ID</th>
@@ -74,4 +85,5 @@
     </tbody>
     
 </table>
+</div>
 <%- include('partials/footer') %>

@@ -1,28 +1,19 @@
 <%- include('partials/header') %>
-    <form action="/dashboard/search_book" method="post">
-        <label for="category">Select a category to search</label>
-            <select name="category">
-                <option value="isbn">ISBN</option>
-                <option value="title">Title</option>
-                <option value="author">Author</option>
-                <option value="year_of_pub">Year of Publication</option>
-            </select>
-        <input name="ans" type="text">
-        <button type="submit">Search</button>
-    </form>
-    <!-- <div class="dropdown" style="margin-left: 45%;margin-top: 5%">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-          Category
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-          <li value="isbn">ISBN</li>
-          <li value="title">Title</li>
-          <li value="author">Author</li>
-          <li value="year_of_pub">Year of Publication</li>
-        </ul>
-    </div>
-    <div class="input-group mb-3" style="width:30%;margin-top: 0.5%;margin-left: 35%" >
-        <input type="text" class="form-control" placeholder="enter text" aria-label="Recipient's username" aria-describedby="button-addon2">
-        <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
-    </div> -->
+<div style="text-align: center; align-items: center; align-content: center;">
+<form style="margin: 15% auto;" action="/dashboard/search_book" method="post">
+    <label for="category">Select a category to search</label>
+        <select name="category">
+            <option value="isbn">ISBN</option>
+            <option value="title">Title</option>
+            <option value="author">Author</option>
+            <option value="year_of_pub">Year of Publication</option>
+        </select>
+        <br>
+        <br>
+    <input name="ans" type="text">
+    <br>
+    <br>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+</div>
 <%- include('partials/footer') %>
