@@ -11,8 +11,8 @@
 <h2><%= details[0].year_of_pub %></h2>
 <h4><%= details[0].shelf_id %></h4>
 <h4><%= details[0].current_status %></h4>
-<table >
-    <thead>
+<table class="table table-bordered table-hover">
+    <thead class="thead-dark">
         <th>Copy Number</th>
         <th>Availability</th>
     </thead>
@@ -54,8 +54,8 @@
 </form>
 <a href="/dashboard/feedback/<%= Isbn%>">Give Feedback</a>
 <h4>User Feedbacks</h4>
-<table border="1px">
-    <thead>
+<table class="table table-bordered table-hover" border="1px">
+    <thead class="thead-dark">
         <th>ID</th>
         <th>Rating</th>
         <th>Review</th>

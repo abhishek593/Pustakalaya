@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Prasheel@4",
+    password: "5930",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -450,6 +450,7 @@ app.post("/issue/:isbn",async function(req,res){
 //displays currentyly issued books of user
 app.get("/dashboard/issued_books",async function(req,res){
     if(req.isAuthenticated()){
+        console.log(req.user.id);
         let sql=`Select * from booksissued where ID="${req.user.id}" and return_status=0`;
         let result=await cquery(sql);
         console.log(result);
