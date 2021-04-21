@@ -1,12 +1,64 @@
 <%- include('partials/header') %>
-<form action="/dashboard/search_book" method="get">
-    <button type="submit">Search a book</button>
-</form>
-<a href="/dashboard/issued_books">Issued Books</a>
-<a href="/dashboard/holds_placed">Holds placed</a>
-<a href="/dashboard/book_shelf">Book Shelf</a>
-<a href="/librarian_special">For Librarian</a>
-<a href="/dashboard/search_people">To Add Friends</a>
-<a href="/dashboard/friend_list">For Viewing Friends</a>
-<a href="/dashboard/recommendations">For Book Recommendations</a>
+<div class="container mt-5">
+    <style>
+        div {
+            padding: 15px 10px 15px 30px;
+        }
+    </style>
+    <form action="/dashboard/search_book" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >Search a book</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/issued_books" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >Issued Books</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/holds_placed" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >Holds placed</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/book_shelf" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >Book Shelf</button>
+        </div>
+    </form>
+
+    <% if(librarian){  %>
+    <form action="/librarian_special" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >For Librarian</button>
+        </div>
+    </form>
+    <% }   %>
+
+    <form action="/dashboard/feedback" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >For Book Feedback</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/search_people" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >To Add Friends</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/friend_list" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >For Viewing Friends</button>
+        </div>
+    </form>
+
+    <form action="/dashboard/recommendations" method="get">
+        <div class="form-group">
+            <button type="submit" class="btn btn-dark form-control" >For Book Recommendations</button>
+        </div>
+    </form>
+</div>
 <%- include('partials/footer') %>

@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.use(cookieParser('secret'))
-app.use(session({cookie: {maxAge: 60000}}))
+app.use(session({cookie: {maxAge: 6000000}}))
 
 app.use((req, res, next)=>{
     res.locals.message = req.session.message
@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Arastu#1719",
+    password: "Prasheel@4",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -215,7 +215,11 @@ app.post("/login",function(req,res){
 app.get("/dashboard",function(req,res){
     if(req.isAuthenticated()){
         console.log(req.user.id);
-        res.render("user_dashboard");
+        let librarian=0;
+        if(req.user.id[0]=='l'){
+            librarian=1;
+        }
+        res.render("user_dashboard",{librarian: librarian});
     }
     else{
         res.redirect("/login")
@@ -374,60 +378,69 @@ app.post("/issue/:isbn",async function(req,res){
     if(req.isAuthenticated()){
         //isbn of book to issue
         let isbn=req.params.isbn;
+        let valid_request=1;
         //if issuer is student we check for his limit and update that
         if(req.user.id[0]=='s'){
-            let sql=`Select Number_of_issued_books from student where s_id="${req.user.id}"`;
+            let sql=`Select Number_of_issued_books,unpaid_fines from student where s_id="${req.user.id}"`;
             let result=await cquery(sql);
-            if(result[0].Number_of_issued_books===3){
-                res.write("Issue limit exceeded")
-                res.render("/book_details/"+isbn);
+            console.log(result);
+            if(result[0].Number_of_issued_books===3 || result[0].fines>1000){
+                req.session.message = {
+                    type: 'danger',
+                    intro: 'Empty fields! ',
+                    message: 'Book cannot be issued'
+                }
+                valid_request=0;
+                res.redirect("/book_details/"+isbn);
             }
             else{
                 sql=`UPDATE student set Number_of_issued_books=Number_of_issued_books+1 where s_id="${req.user.id}"`;
                 result=await cquery(sql);
             }
         }
-        //to find the available copy number
-        sql=`select copy_number from all_books where current_status=1 and ISBN="${isbn}"`;
-        let result1=await cquery(sql);
-        let copy_number= result1[0].copy_number;
-        let size = result1.length;
-        console.log("copyNumber= "+copy_number);
-        //checking if on hold
-        sql=`select id from booksissued where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
-        let answer=await cquery(sql);
-        if(answer.length>0){
-            sql=`UPDATE booksissued set return_status=0, overdue_date="${overdue(req.user.id[0])}" where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
-            await cquery(sql);
-            //checking if more holds exist on current book 
-            sql=`Select id from hold_request where ISBN="${isbn}"`
-            let result6=await cquery(sql);
-            let status;
-            if(result6.length>0){
-                status="on-loan-and-on-hold";
+        if(valid_request){
+            //to find the available copy number
+            sql=`select copy_number from all_books where current_status=1 and ISBN="${isbn}"`;
+            let result1=await cquery(sql);
+            let copy_number= result1[0].copy_number;
+            let size = result1.length;
+            console.log("copyNumber= "+copy_number);
+            //checking if on hold
+            sql=`select id from booksissued where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
+            let answer=await cquery(sql);
+            if(answer.length>0){
+                sql=`UPDATE booksissued set return_status=0, overdue_date="${overdue(req.user.id[0])}" where ISBN="${isbn}" and copy_number="${copy_number}" and return_status=2`
+                await cquery(sql);
+                //checking if more holds exist on current book 
+                sql=`Select id from hold_request where ISBN="${isbn}"`
+                let result6=await cquery(sql);
+                let status;
+                if(result6.length>0){
+                    status="on-loan-and-on-hold";
+                }
+                else{
+                    status="on-loan";
+                }
+                console.log("status "+status);
+                sql=`update books_collection set current_status="${status}" where ISBN="${isbn}"`;
+                await cquery(sql);
+                console.log("DONE");
             }
+            //
             else{
-                status="on-loan";
+                sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue((req.user.id)[0])}",0)`;
+                let result2=await cquery(sql);
+                console.log("result2= "+result2);
+                if(size==1){
+                    let sql=`update books_collection set current_status="on-loan" where ISBN="${isbn}"`;
+                    let result3=await cquery(sql);
+                }
             }
-            console.log("status "+status);
-            sql=`update books_collection set current_status="${status}" where ISBN="${isbn}"`;
-            await cquery(sql);
-            console.log("DONE");
+            sql=`update all_books set current_status=0 where ISBN="${isbn}" and copy_number="${copy_number}"`;
+            let result4=await cquery(sql);
+            console.log("result4= "+result4);
+            res.redirect("/book_details/"+isbn);
         }
-        //
-        else{
-            sql=`INSERT into booksissued values("${isbn}","${copy_number}","${req.user.id}","${date()}","${overdue((req.user.id)[0])}",0)`;
-            let result2=await cquery(sql);
-            console.log("result2= "+result2);
-            if(size==1){
-                let sql=`update books_collection set current_status="on-loan" where ISBN="${isbn}"`;
-                let result3=await cquery(sql);
-            }
-        }
-        sql=`update all_books set current_status=0 where ISBN="${isbn}" and copy_number="${copy_number}"`;
-        let result4=await cquery(sql);
-        console.log("result4= "+result4);
-        res.redirect("/book_details/"+isbn);
     }
     else{
         res.redirect("/login");

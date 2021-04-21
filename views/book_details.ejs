@@ -1,4 +1,10 @@
 <%- include('partials/header') %>
+<%if (message) {%>
+<div style="text-align: center" class="alert alert-{{message.type}}">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong><%=message['intro']%></strong> <p><%=message['message']%></p>
+</div>
+<%}%>
 <h1><%= details[0].title %></h1>
 <h2><%= details[0].ISBN %></h2>
 <h2><%- details[0].author %></h2>
