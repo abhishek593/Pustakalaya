@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Prasheel@4",
+    password: "Arastu#1719",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -311,7 +311,10 @@ app.get("/book_details/:isbn",async function(req,res){
         })
         sql= 'SELECT ID, rating, Reviews FROM book_feedback WHERE ISBN = "'+req.params.isbn+'"';
         let result5=await cquery(sql);
-        res.render("book_details",{details: values, copies: copies, hold: hold, issue: issue, book_shelf: book_shelf, Isbn: req.params.isbn, data: result5});
+        sql= 'SELECT AVG(rating) AS avgRating FROM book_feedback WHERE ISBN = "'+req.params.isbn+'"';
+        let result6=await cquery(sql);
+        let avg_rating= Number((result6[0].avgRating).toFixed(1));
+        res.render("book_details",{details: values, copies: copies, hold: hold, issue: issue, book_shelf: book_shelf, Isbn: req.params.isbn, data: result5, avgRating: avg_rating});
     }
     else{
         res.redirect("/login")
