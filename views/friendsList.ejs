@@ -7,7 +7,7 @@
     </thead>
     <tbody>
         
-            <% data.forEach(function(result){    %>
+            <% data1.forEach(function(result){    %>
             <tr>
                 <td>
                     <%= result.id %>
@@ -15,6 +15,24 @@
                 <td><%= result.name %></td>
                 <td><a href="/remove_friend/<%= result.id %>">Remove</a></td>
             </tr>
+            <% })   %>
+            <% data2.forEach(function(result){    %>
+                <tr>
+                    <td>
+                        <%= result.id %>
+                    </td>
+                    <td><%= result.name %></td>
+                    <td><a href="/remove_friend/<%= result.id %>">Remove</a></td>
+                </tr>
+            <% })   %>
+            <% data3.forEach(function(result){    %>
+                <tr>
+                    <td>
+                        <%= result.id %>
+                    </td>
+                    <td><%= result.name %></td>
+                    <td><a href="/remove_friend/<%= result.id %>">Remove</a></td>
+                </tr>
             <% })   %>
         
     </tbody>

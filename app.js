@@ -882,21 +882,13 @@ app.get("/dashboard/friend_list", async (req, res) => {
     if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql;
-        if(req.user.id[0] == 's')
-        {
-            sql= 'SELECT s_id AS id, name FROM student JOIN friends ON student.s_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
-        }
-        else if(req.user.id[0] == 'f')
-        {
-            sql= 'SELECT f_id AS id, name FROM faculty JOIN friends ON faculty.f_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
-        }
-        else
-        {
-            sql= 'SELECT l_id AS id, name FROM librarian JOIN friends ON librarian.l_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
-        }
-        let result=await cquery(sql);
-        console.log(result);
-        res.render("friendsList", {data: result});
+        sql= 'SELECT s_id AS id, name FROM student JOIN friends ON student.s_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+        let result1=await cquery(sql);
+        sql= 'SELECT f_id AS id, name FROM faculty JOIN friends ON faculty.f_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+        let result2=await cquery(sql);
+        sql= 'SELECT l_id AS id, name FROM librarian JOIN friends ON librarian.l_id = friends.id_2 WHERE friends.id_1 = "'+req.user.id+'"';
+        let result3=await cquery(sql);
+        res.render("friendsList", {data1: result1, data2: result2, data3: result3});
     }else{
         res.redirect("/login");
     }
@@ -947,7 +939,11 @@ app.get("/dashboard/recommendations", async (req, res) => {
     if(req.isAuthenticated()) {
         console.log(req.user.id);
         let sql;
-        sql= 'SELECT ISBN, title, author FROM books_collection WHERE shelf_id IN (SELECT shelf_id FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id = "'+req.user.id+'"))';
+        sql= `SELECT ISBN, title, author
+        FROM books_collection
+        WHERE (shelf_id IN (SELECT shelf_id FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id = "${req.user.id}")))
+        AND
+        (ISBN NOT IN (SELECT ISBN FROM user_book_shelf WHERE id = "${req.user.id}"))`;
         let result1=await cquery(sql);
         sql= 'SELECT ISBN, title, author FROM books_collection WHERE ISBN IN (SELECT ISBN FROM user_book_shelf WHERE id IN (SELECT id_2 FROM friends WHERE id_1 = "'+req.user.id+'"))';
         let result2=await cquery(sql);
