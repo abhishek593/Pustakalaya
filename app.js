@@ -32,7 +32,7 @@ var con= mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Prasheel@4",
+    password: "Arastu#1719",
     database: "pustakalaya"
 })
 con.connect(function(err) {
@@ -222,12 +222,13 @@ app.get("/dashboard",async function(req,res){
 
         let result;
         let fines=0;
-        if(req.user.id[0]=='s'){
         let sql=`Select unpaid_fines from student where s_id="${req.user.id}"`;
         result=await cquery(sql);
-        fines=1;
+        if(result[0].unpaid_fines)
+        {
+            fines= result[0].unpaid_fines;
         }
-        res.render("user_dashboard",{librarian: librarian,result: result,fines: fines});
+        res.render("user_dashboard",{librarian: librarian,fines: fines});
     }
     else{
         res.redirect("/login")

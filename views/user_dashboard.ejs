@@ -6,9 +6,7 @@
         }
     </style>
     <center>
-        <% if(fines){   %>
-            <h3 class="lead">Fines: <%=result[0].unpaid_fines%></h3>
-        <% } %>
+        <h3 class="lead">Fines: <%=fines%></h3>
     </center>
     
     <form action="/dashboard/search_book" method="get">
