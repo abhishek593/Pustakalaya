@@ -1,17 +1,13 @@
 <%- include('partials/header') %>
 <div class="container mt-5">
-  <h1>Feedback</h1>
+  <h1>Feedback for Book ISBN(<%= data%>)</h1>
   <div class="row">
     <div class="col-sm-8">
       <div class="card">
         <div class="card-body">
 
           <!-- Makes POST request to /feedback route -->
-          <form action="/dashboard/feedback" method="POST">
-            <div class="form-group">
-                <label for="ISBN">ISBN</label>
-                <input type="text" class="form-control" name="ISBN">
-            </div>
+          <form action="/dashboard/feedback/<%= data%>" method="POST">
             <div class="form-group">
                 <label for="Reviews"><br>Reviews</label>
                 <input type="text" class="form-control" name="Reviews">
@@ -31,7 +27,6 @@
             </div>
             <button type="submit" class="btn btn-dark">Submit</button>
           </form>
-
         </div>
       </div>
     </div>

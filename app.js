@@ -305,7 +305,9 @@ app.get("/book_details/:isbn",async function(req,res){
                 book_shelf=0;
             }
         })
-        res.render("book_details",{details: values,copies: copies,hold: hold,issue: issue,book_shelf: book_shelf});
+        sql= 'SELECT ID, rating, Reviews FROM book_feedback WHERE ISBN = "'+req.params.isbn+'"';
+        let result5=await cquery(sql);
+        res.render("book_details",{details: values, copies: copies, hold: hold, issue: issue, book_shelf: book_shelf, Isbn: req.params.isbn, data: result5});
     }
     else{
         res.redirect("/login")
@@ -829,20 +831,20 @@ Librarian stuff ends
 
 ///////////////////////////////////////////////////////////////////////////////
 
-app.get("/dashboard/feedback", (req, res) => {
+app.get("/dashboard/feedback/:isbn", (req, res) => {
     if(req.isAuthenticated()) {
         console.log(req.user.id);
-        res.render("feedback");
+        res.render("feedback", {data: req.params.isbn});
     }else{
         res.redirect("/login");
     }
 });
 
-app.post("/dashboard/feedback", async (req, res) => {
+app.post("/dashboard/feedback/:isbn", async (req, res) => {
     if(req.isAuthenticated()) {
         let result=await cquery('SELECT * FROM Book_Feedback');
         let fid= 'R' + (result.length).toString();
-        let sql= 'INSERT INTO Book_Feedback (Feedback_id, ISBN, Reviews, rating, ID) VALUES ("'+fid+'", "'+req.body.ISBN+'", "'+req.body.Reviews+'", "'+req.body.rating+'", "'+req.user.id+'")';
+        let sql= 'INSERT INTO Book_Feedback (Feedback_id, ISBN, Reviews, rating, ID) VALUES ("'+fid+'", "'+req.params.isbn+'", "'+req.body.Reviews+'", "'+req.body.rating+'", "'+req.user.id+'")';
         let result2=await cquery(sql);
         console.log(result2);
         res.redirect("/dashboard");

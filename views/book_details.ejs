@@ -46,5 +46,25 @@
         <h4>Book Exists in Book_shelf</h4>
     <% } %> 
 </form>
-for
+<a href="/dashboard/feedback/<%= Isbn%>">Give Feedback</a>
+<h4>User Feedbacks</h4>
+<table border="1px">
+    <thead>
+        <th>ID</th>
+        <th>Rating</th>
+        <th>Review</th>
+    </thead>
+    <tbody>
+        
+            <% data.forEach(function(result){    %>
+            <tr>
+                <td><%= result.ID %></td>
+                <td><%= result.rating %></td>
+                <td><%= result.Reviews %></td>
+            </tr>
+            <% })   %>
+        
+    </tbody>
+    
+</table>
 <%- include('partials/footer') %>
