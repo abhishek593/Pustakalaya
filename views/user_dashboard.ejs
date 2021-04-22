@@ -6,7 +6,9 @@
         }
     </style>
     <center>
-        <h3 class="lead">Fines: <%=fines%></h3>
+        <% if(librarian === 0) {%>
+            <h3 class="lead">Fines: <%=fines%></h3>
+        <% } %>
     </center>
     
     <form action="/dashboard/search_book" method="get">

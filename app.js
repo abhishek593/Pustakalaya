@@ -219,11 +219,19 @@ app.get("/dashboard",async function(req,res){
         if(req.user.id[0]=='l'){
             librarian=1;
         }
-
-        let result;
         let fines=0;
-        let sql=`Select unpaid_fines from student where s_id="${req.user.id}"`;
-        result=await cquery(sql);
+        let sql;
+        let result;
+        if(req.user.id[0] == 's')
+        {
+            sql=`Select unpaid_fines from student where s_id="${req.user.id}"`;
+            result=await cquery(sql);
+        }
+        else if(req.user.id[0] == 'f')
+        {
+            sql=`Select unpaid_fines from faculty where f_id="${req.user.id}"`;
+            result=await cquery(sql);
+        }
         if(result[0].unpaid_fines)
         {
             fines= result[0].unpaid_fines;
@@ -322,7 +330,16 @@ app.get("/book_details/:isbn",async function(req,res){
         let result5=await cquery(sql);
         sql= 'SELECT AVG(rating) AS avgRating FROM book_feedback WHERE ISBN = "'+req.params.isbn+'"';
         let result6=await cquery(sql);
-        let avg_rating= Number((result6[0].avgRating).toFixed(1));
+        let avg_rating;
+        console.log(result6[0].avgRating);
+        if(result6[0].avgRating != null)
+        {
+            avg_rating= Number((result6[0].avgRating).toFixed(1));
+        }
+        else
+        {
+            avg_rating= "Not Available";
+        }
         res.render("book_details",{details: values, copies: copies, hold: hold, issue: issue, book_shelf: book_shelf, Isbn: req.params.isbn, data: result5, avgRating: avg_rating});
     }
     else{
